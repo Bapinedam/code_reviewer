@@ -1,6 +1,7 @@
 import openai
 from dotenv import load_dotenv
 import os
+import argparse
 
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -14,19 +15,35 @@ PROMPT = """
         
         """
 
-filecontent =  """"
-                def mistery(x, y):
-                    return x ** y
-                """
-  
-messages = [
-    {"role": "system", "content": PROMPT},
-    {"role": "user", "content": f"Code review the following file: {filecontent}"}
-]
-        
-response = openai.chat.completions.create(
-        model = "gpt-3.5-turbo",
-        messages = messages
-    )
+def code_review(file_path, model:str = "gpt-3.5-turbo"):
+    with open(file_path, "r") as file:
+        content = file.read()
+    generated_code_review = make_code_review_request(content, model)
 
-print(response.choices[0].message.content)
+    print(generated_code_review)
+    
+def make_code_review_request(filecontent, model):
+
+    messages = [
+        {"role": "system", "content": PROMPT},
+        {"role": "user", "content": f"Code review the following file: {filecontent}"}
+    ]
+            
+    response = openai.chat.completions.create(
+            model = model,
+            messages = messages
+        )
+
+    return response.choices[0].message.content
+
+def main():
+    parser = argparse.ArgumentParser(description = "Simple code reviewer for a file")
+    parser.add_argument("file")
+    parser.add_argument("--model", default="gpt-3.5-turbo")
+    args = parser.parse_args()
+    code_review(args.file, args.model)
+    
+if __name__ == '__main__':
+    load_dotenv()
+    openai.api_key = os.getenv("OPENAI_API_KEY")
+    main()
